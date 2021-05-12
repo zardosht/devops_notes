@@ -140,7 +140,7 @@ Working with files:
 * `systemctl` is used to manage the `systemd` services. So we have to configure our application as systemd service.
 * A systemd service is configured as a **systemd unit file**
 * These files maybe located at `/etc/systemd/system`
-* The system unit file must be names as the desired service name (e.g. `my_app`) with a `.service` extension.
+* The systemd unit file must be named as the desired service name (e.g. `my_app`) with a `.service` extension.
 * Inside it, we can define a section `[Service]` with the directive `ExecStart=` where we provide the command that runs the application.
 * run `systemctl daemon-reload` to let systemd know that there a new service configured. 
 * then, run `systemctl start my_app` to run the service
@@ -150,3 +150,9 @@ Working with files:
   * `ExecStartPost=<command>` run the given command after the service is stopped
   * `Restart=always` to always restart the service if it crashes
 
+![alt](./images/servicectl_unit_configuration_file.png)
+
+## Virtual Machines
+
+* Type 1 hypervisors (run on bare metal; VMWare ESXi or Microsoft Hyper-V) vs. Type 2 hypervisors (run on host OS; e.g. Oracle VirtualBox or VMWare Workstation)
+* 
