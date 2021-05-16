@@ -155,4 +155,62 @@ Working with files:
 ## Virtual Machines
 
 * Type 1 hypervisors (run on bare metal; VMWare ESXi or Microsoft Hyper-V) vs. Type 2 hypervisors (run on host OS; e.g. Oracle VirtualBox or VMWare Workstation)
+* osboxes.org
+* Start VM normally vs. **Headless** mode vs. **Detached** mode
+* The VM needs to have an IP address configured and SSH needs to be running on it. We use console (normal mode) to configure it. After that we can start the VM in Headless mode and `ssh` to it from the host OS. 
+
+### Check and set the IP addresses on a CentOS machine:
+
+* Bridge network adapter (the VM is like an independent computer on the local network) vs. NAT adapter (the VM gets an IP address assigned by host and host does NAT; we also need to do port forwarding on the host to access the SSH port on the guest VM). 
 * 
+* `$ ip addr show` : Show network interfaces and their IP addresses
+* With NAT adapter, the VM automatically gets a private IP assigned (`10.0.2.15/24`) by teh NAT router on the guest. This IP is not accessible from anywhere else. Neither from host nor from any other VM. 
+* However, despite this private address, the VM should have internet connectivity through host (check by `ping google.com`)
+* You can see the IP address using `$ ifconfig` 
+
+* If the network interface (`enp0s3`) is not on at the boot, you can do `ifup enp0s3`. 
+* If the network interface `enp0s3` is not on at the boot, you can make it always on at boot by adding `ONBOOT=yes` to `/etc/sysconfig/network-scripts/ifcfg-enp0s3` and making sure `NetworkManager` service starts at boot (`systemctl enable NetworkManager`)
+
+
+* `$ ip addr add 192.168.1.10 dev eth0` : Set the IP address on a network card (here `eth0`)
+
+### Check, configure and SSH to guest:
+* The SSH service comes by default with the CentOS image. 
+* `$ service sshd status` : Check the status of the SSH service
+* `$ service sshd start` : Start SSH service
+* If you are using NAT network adapter for the VM make sure you are forwarding any chose port from host to port `22` (SSH) of the guest. 
+* SSH to guest from host: `$ ssh root@127.0.0.1 -p 2222` or with another user: `$ ssh osboxes@127.0.0.1 -p 2222`. The password for the os image can be found on the `osboxes.org` (default)
+
+### VirtualBox Networking
+* Networking options available in VirtualBox (NAT, Bridge, Host Only); which adapter to use when
+* Troubleshooting internet connectivity on VMs
+* Networking multiple VMs
+
+* IP addresses are assigned to adapters (Ethernet, WLAN, ...)
+* `ip addr show` shows the IP address assigned to each interface
+* A host with multiple network adapters (Ethernet, WLAN) will have multiple IP addresses assigned to it, and other hosts can access it using any of these. Different adapters can also be connected to different networks and have for example internet connectivity or not, depending on the network they are connected to. 
+* You can configure an VM in VirtualBox to have up to 4 adapters. Go to VM settings to Network tab.
+* By default the VM have NAT adapter and a private IP address
+* Imagine we have 4 VMs on our host, and host is itself connected to a network with the IP address `192.168.1.10`. We can create a virtual network on the host using the VM, for example with the IP address range `192.168.5.0`. The host itself gets a virtual adapter to connect to this network, with the IP address `192.168.5.1`. The VM on the network will get IP addresses like `192.168.5.2` to `192.168.5.5`. We call this network a "private virtual **Host Only network**".
+  
+![alt](./images/virtual_private_host_only_network.png)
+
+* To create a private virtual host only network in VirtualBox go to host network manger. There you can define the network name, IP range, subnet mask, and if the DHCP server should be enabled. As soon as this private host only network is created, your host computer gets a virtual adapter (e.g. `vboxnet0`) connected to it (check with `ifconfig`)
+* After crating the private network you can add VMs to it. Go to network settings of the VM and for the adapter select the created host only network in Attache to select Host-only Adapter. 
+
+* The problem with the host-only network is that the VMs cannot connect to a computer outside the host-only network, e.g. to a DB server in the outer network, with the IP `192.168.1.11`
+* In this case we should cerate a **NAT Network**. The VM get their IP addresses from the host, but now using the NAT server from the host, the can communicate to the outside world. However the outside world is not aware of the VMs due to network address translation in the host. 
+* To create a NAT network, go to VirtualBox settings and create a NAT network. Then in the VM settings select the NAT Network for Attach to setting of the adapter. 
+* Note that NAT Network is different from NAT (for Attach to setting). NAT is the default setting for a VM with VirtualBox. It also uses NAT router on the host. However it does not have the virtual networking. That is, the VM on the host that are attached to NAT, can't talk to each other. With the NAT Network, we have a virtual network with a NAT router. 
+
+* Now how to let an external host (e.g `192.168.1.25`) access the VMs? For that you need to create a **Bridge Network**
+* With Bridge network, the VMs get an IP in the range of external network. They are like hosts on the external real network, as if there is no virtual network on the host.
+
+* Now what about internet connectivity in these three networking modes?
+  * With NAT Network, the VM have access to internet through host
+  * With bridge Network they are like normal hosts on the external network, so they have internet
+  * With Host-only network however the VM cannot connect to internet. For that, we have to configure IP Forwarding on host computer, which is by default disabled on most computers. This essentially makes the host computer a router. Another option would be to configure a second adapter on the VMs, for example connected to a NAT Network.
+
+* Consider also Port Forwarding in the above discussions. This is for example useful for the default case of adapter attached to NAT.
+
+
