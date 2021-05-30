@@ -152,6 +152,8 @@ Working with files:
 
 ![alt](./images/servicectl_unit_configuration_file.png)
 
+# Setup lab environment
+
 ## Virtual Machines
 
 * Type 1 hypervisors (run on bare metal; VMWare ESXi or Microsoft Hyper-V) vs. Type 2 hypervisors (run on host OS; e.g. Oracle VirtualBox or VMWare Workstation)
@@ -263,28 +265,77 @@ end
 * We can do many other configurations in `Vagrantfile`, e.g.:
 
 ```
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
 Vagrant.configure("2") do |config|
+  # The most common configuration options are documented and commented below.
+  # For a complete reference, please see the online documentation at
+  # https://docs.vagrantup.com.
+
+  # Every Vagrant development environment requires a box. You can search for
+  # boxes at https://vagrantcloud.com/search.
   config.vm.box = "centos/7"
 
-  # configure port forwarding
-  config.vm.network "forward_port", guest: 80, host:8080
-  
-  # configure a synced directory between host and VM
-  config.vm.synced_folder "../data", "/vagrant_data"
+  # Disable automatic box update checking. If you disable this, then
+  # boxes will only be checked for updates when the user runs
+  # `vagrant box outdated`. This is not recommended.
+  # config.vm.box_check_update = false
 
-  # configure the CPU and memory on the VM
-  # for that you need a provider block
-  config.vm.provider "virtualbox" do |vb|
-    vb.memory = "1024"
-  end
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine. In the example below,
+  # accessing "localhost:8080" will access port 80 on the guest machine.
+  # NOTE: This will enable public access to the opened port
+  # config.vm.network "forwarded_port", guest: 80, host: 8080
 
-  # to run shell scripts use a shell provision block
-  config.vm.provision "shell", inline: <<-SHELL
-    apt-get update
-    apt-get install -y apache2
-  SHELL
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine and only allow access
+  # via 127.0.0.1 to disable public access
+  # config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
 
+  # Create a private network, which allows host-only access to the machine
+  # using a specific IP.
+  # config.vm.network "private_network", ip: "192.168.33.10"
+
+  # Create a public network, which generally matched to bridged network.
+  # Bridged networks make the machine appear as another physical device on
+  # your network.
+  # config.vm.network "public_network"
+
+  # Share an additional folder to the guest VM. The first argument is
+  # the path on the host to the actual folder. The second argument is
+  # the path on the guest to mount the folder. And the optional third
+  # argument is a set of non-required options.
+  # config.vm.synced_folder "../data", "/vagrant_data"
+
+  # Provider-specific configuration so you can fine-tune various
+  # backing providers for Vagrant. These expose provider-specific options.
+  # Example for VirtualBox:
+  #
+  # config.vm.provider "virtualbox" do |vb|
+  #   # Display the VirtualBox GUI when booting the machine
+  #   vb.gui = true
+  #
+  #   # Customize the amount of memory on the VM:
+  #   vb.memory = "1024"
+  # end
+  #
+  # View the documentation for the provider you are using for more
+  # information on available options.
+
+  # Enable provisioning with a shell script. Additional provisioners such as
+  # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
+  # documentation for more information about their specific syntax and use.
+  # config.vm.provision "shell", inline: <<-SHELL
+  #   apt-get update
+  #   apt-get install -y apache2
+  # SHELL
 end
+
 ```
 
 * When we run `$ vagrant up` command with above configuration, the Vagrant provisions a VM followed the specification given in the file, and also runs the shell script given here.
@@ -292,4 +343,148 @@ end
 * Vagrant uses Providers to abstract out creation and configuration of the the VMs. VirtualBox is only one of the existing providers. You can use Vagrant with VMWare, Hyper-V, or even Docker. 
 
 ### Demo: Vagrant
+
+* Download and install from vagrantup.com
+* Create a directory and inside it run `$ vagrant init centos/7`. This creates a `Vagrantfile` for the CentOS image in the directory. 
+* You can edit this `Vagrantfile` to change configurations. 
+* Run `$ vagrant up` command to download the image into provider's (in our case VirtualBox) default VM folder, and create the VirtualBox according to the configuration, and boots it up. If you open the VirtualBox, you see the VM running. 
+* We can now even simply SSH into the VM using `$ vagrant ssh`
+* Use `$ vagrant status` to see the status of the VM
+* Use `$ vagrant halt` to shutdown the VM
+* We can change the settings of the VM, like its name, in the `Vagrantfile`. For changes to take effect use `$ vagrant reload` command
+* `$ vagrant up` waits for the VM to boot up. If the VM has few resources, or has other configuration that makes it booting take longer, then an error might appear indicating a time out. However if the VM boots successfully, you can access it despite this error. But if you want to get rid of this error you can add a configuration to Vagrantfile: `config.vm.boot_timeout = 600` ms
+
+
+# Networking Basics
+* Switching
+* Routing
+* Default Gateway
+* DNS Configuration on Linux
+
+## Switching
+* We can connect two or more computers using a **Switch** to create a network. The computers are connected using their network interfaces to the switch. Each interface will have an IP address.
+* To see interfaces on a host: `$ ip link` 
+* To assign ip address to a host: `$ ip addr 192.168.1.10/24 dev eth0`
+* A switch can only connect computers on the same network (e.g. `192.168.1.0`), for example imagine we have a network of two computers `A`, with IP address `192.168.1.10` and `B` with IP address `192.168.1.11` connected through a switch to the network `192.168.1.0`
+* Now imagine we have another networks with address `192.168.2.0` with two computers `C` with IP address `192.168.2.10` and `D` with IP address `192.168.2.11`.
+* Now how do we connect computer B (`192.168.1.11`) from first network to computer C (`192.168.2.10`) of other network? This is the job of a **Router**
+
+## Routing and Gateway
+* A Router is an intelligent device that helps us connect two different networks. Think of it as a server (computer) with many different network interfaces. 
+* In our above example, since the router is connected to two separate networks, it gets assigned two separate IP addresses, one for each network. E.g. `192.168.1.1` for the first network, and `192.168.2.1` for the second network.
+* Now, when system B in the first network, wants to send a packet to system C in the second network, how does it know where is the Router? the Router is just another device, connected to the network, there might be tens of different devices connected to the same networks
+* This is where we configure the systems with a **Gateway** or a Route. Think of it, if the network was a room, the Gateway is its door to the outside world: to other networks, to internet, etc. 
+* The systems need to know where that door is, to go through that.
+* To see the existing **routing configuration** run: `$ route` command
+
+```
+[root@osboxes ~]# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+default         _gateway        0.0.0.0         UG    100    0        0 enp0s3
+10.0.2.0        0.0.0.0         255.255.255.0   U     100    0        0 enp0s3
+192.168.57.0    0.0.0.0         255.255.255.0   U     101    0        0 enp0s8
+192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+```
+
+* Now for computer B on `192.168.1.0` network to connect to computer C on `192.168.2.0` network, we need to tell it where the Gateway is: 
+* `B$ ip route add 192.168.2.0/24 via 192.168.1.1` 
+* This command specifies on computer B that to access network `192.168.2.0` use the Gateway at `192.168.1.1`
+* Now, this has to be configured on all the systems. For example for C to access B, we need to configure the gateway: `C$ ip route add 192.168.1.0/24 via 192.168.2.1`
+* Also if we want to for example access a Google server on the Internet at network `172.217.194.0`, then we need to connect the Router to the internet and configure on all computers the route using e.g. on B: `B$ ip route add 172.217.194.0 via 192.168.1.1`
+* This is not practical though, as there are so many other computers on Internet and in other networks. Therefore we define a **default Gateway**. This way instead of adding a routing table entry for each network, we would say, for any network that you don't know a route to, use this router as the **default Gateway**
+* To define the default gateway: `$ ip route add default via 192.168.1.1`
+* Instead of the word `default` we can says `0.0.0.0`. This means "any IP destination"
+* A `0.0.0.0` entry as the Gateway, means to access the destination, you don't need a gateway. For example for system C to access system D, both on `192.168.2.0` network
+* Now imagine we have two Routers on our network. One for the internet, another of the internal private network. Then you will need two separate entries in your Routing table: One entry for the internal private network and another one with the default gateway for all other public networks on the internet. 
+* So if you are having issues reaching internet from your system, this routing table and the default Gateway configuration is good place to start. 
+
+![alt](./images/network_setup_and_routing_table_with_two_routers.png)
+
+
+### Setting a Linux Host as a Simple Router
+
+* Imagine we have three nodes: A, B, C, with A and B on `192.168.1.0` network, and B and C on `192.168.2.0` network. So, B is on both networks, and we can use it as the router. 
+* At first if we `ping` C from A, we get `Connect: Network unreachable` error. Because A does not know how to reach C in the other network.
+* We add routing entries on A and C to reach each other via B (`192.168.1.6` on first network and `192.168.2.6` on second network): 
+  * On A `$ ip route add 192.168.2.0/24 via 192.168.1.6`
+  * On C `$ ip route add 192.168.1.0/24 via 192.168.2.6`
+
+* But the pings still don't work. This is because, although B has two network interfaces (`eth0` connected to first network and `eth1` connected to second network), but it does not forward packets by default between interfaces. This is because an obvious security reason disabled by default on Linux (reason: imagine you have host with two interfaces, one connected two Internet and one to the private network. Then it would be possible for other computers on the Internet to send packets to the private network)
+* This setting is in file `/proc/sys/net/ipv4/ip_forward`. By default this value is `0`
+* To persistently setting it to `1` we need to set the same values in the `/etc/sysctl.conf`: `net.ipv4.ip_forward = 1`
+
+![alt](./images/configure_linux_host_as_router.png)
+
+
+### Summary: Key Networking Commands
+* `$ ip link` to list and modify interfaces on the host
+* `$ ip addr` to see ip addresses assigned to those interfaces
+* `$ ip addr add 192.168.1.10/24 dev eth0` to set IP address for an interface
+* REMEMBER: Changes made by these commands is only valid till reboot. To persist them, you need to set them in the `/etc/network/interfaces` file
+* `$ route` or `$ ip route` is used to see the routing table
+* `$ ip route add 192.168.1.0/24 via 192.168.2.1` is used to used to add entries to routing table
+* `$ cat /proc/sys/net/ipv4/ip_forward` to check if **ip forwarding** is enabled on a host, if you are working with a host configured as a router. 
+
+## DNS
+
+* Imagine we have two systems A, with IP address `192.168.1.10` and B with IP address `192.168.1.11` connected to the network `192.168.1.0`. We run a DB on computer B and we want to name it "db".
+* `/etc/hosts` file contains host names for ip addresses. A look up on `/etc/hosts` file and finding the IP address for a given name is called **name resolution**
+```
+# /etc/hosts
+192.168.1.11     db
+```
+
+* NOTE: What ever is written in `/etc/hosts` file is the source of truth. For example system A does not check if the real name of the computer at `192.168.1.11` is db. For example running `hostname` command on computer B, reveals that it's name is `host-2`, but host A does not care, it knows host B as 'db' per `/etc/hosts` files. 
+* This way, we may even be able to fool system A to think the address `192.168.1.11` is Google by adding a corresponding entry in `/etc/hosts` file
+* It used to be the case, that on each computer on the network the `hosts` file would contain the names and IP addresses of the every other computer on the network. But this was not scalable, since adding a new name to the network, would mean editing all the `/etc/hosts` files on every node. 
+* So instead a separate central server would keep this list of host names. This is called a **Name Server**
+* All hosts on the network now look up the name server for resolving the IP addresses from names. 
+* `/etc/resolv.conf` contains the IP address of the DNS server.
+* The `/etc/hosts` file still can be used locally on each computer, and gets precedence in name resolution over the DNS server. 
+* The look up order is by default `/etc/hosts` file then DNS server. This can be defined in the file `/etc/nsswitch.conf`, at the lines with `hosts` entry.
+* The `/etc/resolv.conf` can contain multiple name server addresses configured. For example `8.8.8.8` is a well known public DNS server hosted by Google. We can also configure the DNS server itself to forward any unknown name to a specific nameserver on the Internet.
+
+### Domain Name
+* The address `www.google.com` is a domain name: `.` is the root, `.com` is the top-level domain, `google` is the organization name, and `www` is the sub-domain's name
+* Name resolutions maybe done by forwarding DNS requests to different servers. For example, if your local host looks up `app.google.com`, this request is first sent to your organization's DNS server. If it is not known, the request is forwarded to the root DNS server, which may then forward it to `.com` DNS server, which may forward it to Google's DNS server, and so on.
+* To avoid forwarding requests every time, which takes time, your organization's DNS server might cache the results
+* The `search` entry in `/etc/resolv.conf` appends this postfix to name local name lookups 
+
+### DNS Record Types
+* Record types describe how are the records stored in the DNS server.
+* `A` records: Store IPv4 addresses to host names
+* `AAAA` records (quad A records): store IPv6 addresses to host names
+* `CNAME` records: map one name to another, like multiple aliases, like mapping eat.web-server and hungary.web-server to food.web-server. 
+* Now, `ping` may not always be the right tool to test DNS resolution. 
+* You can use `nslookup` to query a host name from a DNS server. NOTE: `nslookup` does not consider entries in the local `hosts` file. `nslookup` only queries the nameserver
+* `dig` is another tool for testing DNS name resolutions. It also only queries the name server. It returns more details in a similar form as stored on the nameserver. 
+
+
+# Applications Basics
+
+
+# SCM Basics
+
+
+# Web Server
+
+
+# Database Basics
+
+
+
+# Security
+
+
+# General Prerequisites
+
+## YAML
+
+
+## JSON and JSON Path
+
+
+# 2 Tier Applications
+
 
