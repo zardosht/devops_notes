@@ -214,3 +214,82 @@ Working with files:
 * Consider also Port Forwarding in the above discussions. This is for example useful for the default case of adapter attached to NAT.
 
 
+### Demo: Multiple VMs & Networking
+
+* A good way to have multiple VM is to first create a base VM and them clone it (In VirtualBox right click on the VM and select clone)
+* Different VirtualBox networking configuration, based on different requirements: 
+  * If you want the VMs to have internet connectivity, but no need to talk to each other, then one **NAT** adapter is enough
+  * If you want the VMs to have internet and be able to talk to each other, then user **NAT Network** as adapter type. You need to enable port forwarding to be able `ssh` into VMs
+  * If you want the VM to talk to each other but no internet, then you can use **Host Only** network. The host can simply `ssh` into VMs. Each machine, including host itself, is part of a virtual network on the host. You can use DHCP to assign IP addresses to VMs automatically. 
+  * If you want the VMs to talk to each other, and also have Internet, then you can enable two adapters on each VM (**NAT+Host Only**): One adapter set to NAT, gives us internet, the other adapter set to Host Network, connects the VM to the virtual network on the host. 
+  * None of the above options makes your VMs visible to the external network nodes. They are hidden to outside world. If you want them to be accessible from outside world, then choose **Bridged** option. 
+
+![alt](images/different_networking_options_with_VirtualBox.png)
+
+* TIP: Make a snapshot from your VM before making major changes. This way if something goes wrong, you can restore the snapshot version. 
+
+
+### Vagrant
+* In previous sections, we did multiple steps to configure our VMs:
+  1. Download image
+  2. Create VM
+  3. Create Networks
+  4. Configure Networking
+  5. Configure Port Forwarding
+  6. Boot up VM
+
+* Vagrant helps us automate all these steps and do all the steps in one single `vagrant up` command
+* This is specially useful when we are configuring a complex setup of multiple VMs together on different systems.
+
+* To get started, download and install Vagrant from https://www.vagrantup.com/ 
+* Once installed run `$ vagrant init` command and specify the name of the "box" you want to deploy. E.g. `$ vagrant init centos/7`
+* A box is the name Vagrant uses to refer to a packaged format of an environment. It contains an image, and the scripts required to configure the environment. You can find existing boxes at https://app.vagrantup.com/boxes/search 
+* Running `vagrant init` command initializes the Vagrant box in the current directory and creates a vagrant file. 
+* The **Vagrantfile** has instructions on customizing your box
+* To start the Vagrant box, run the `$ vagrant up`. This downloads the image required to create the VM. Downloads the VM, gives it a name, and applies any configuration, such as networking, and port forwarding that is specified in the Vagrantfile
+* Run the `$ vagrant` command without any other options to see a list of available other commands, such as `init, up, suspend, resume, halt, destroy, status, reload, snapshot`
+* You can also use `$ vagrant ssh` command to `ssh` into a running Vagrant box. Vagrant automatically identifies the port configured for forwarding and uses that for SSH
+* A `Vagrantfile` starts with a configuration block. This is where we customize the VM configurations. We can then share this `Vagrantfile` with others and they will have an VM with exactly same configuration.
+* In the simplest form, only a VM image is specified: 
+
+```
+Vagrant.configure("2") do |config|
+  config.vm.box = "centos/7"
+
+
+end
+```
+
+* We can do many other configurations in `Vagrantfile`, e.g.:
+
+```
+Vagrant.configure("2") do |config|
+  config.vm.box = "centos/7"
+
+  # configure port forwarding
+  config.vm.network "forward_port", guest: 80, host:8080
+  
+  # configure a synced directory between host and VM
+  config.vm.synced_folder "../data", "/vagrant_data"
+
+  # configure the CPU and memory on the VM
+  # for that you need a provider block
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = "1024"
+  end
+
+  # to run shell scripts use a shell provision block
+  config.vm.provision "shell", inline: <<-SHELL
+    apt-get update
+    apt-get install -y apache2
+  SHELL
+
+end
+```
+
+* When we run `$ vagrant up` command with above configuration, the Vagrant provisions a VM followed the specification given in the file, and also runs the shell script given here.
+* You can also include multiple VMs in `Vagrantfile`. This helps automating configuration of complex environments, such as small cluster, like Kubernetes clusters, on your laptop. 
+* Vagrant uses Providers to abstract out creation and configuration of the the VMs. VirtualBox is only one of the existing providers. You can use Vagrant with VMWare, Hyper-V, or even Docker. 
+
+### Demo: Vagrant
+
