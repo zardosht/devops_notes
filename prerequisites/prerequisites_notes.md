@@ -485,6 +485,100 @@ default         _gateway        0.0.0.0         UG    100    0        0 enp0s3
 * JDK: a set of tools to develop, build, and run Java applications: `jdb`, `javadoc`, `javac`, `jar`
 * JRE: needed runtime environment to run java programs on any system
 
+* `javac` compile `MyClass.java` and generates a `MyClass.class` file
+* `java MyClass` run the application
+* Packaging using JAR `jar cf MyApp.jar MyClass.class Service1.class Service2.class ...`
+  * automatically generates a `META-INF/MANIFEST.MF` file containing information about the `.jar` file, like the entry point of the application (main class) and any other metadata about the application
+* To run the packaged application `java -jar MyApp.jar`
+* Generate documentation: `javadoc -d doc MyClass.java`
+* Build process: Compile, Test, Package, Document, ...
+* Build process can become very complicated for a large project
+  * Build tools like Maven, Gradle, ANT make managing this process easier using configuration files in which we specify the build steps and their corresponding tasks. 
+  * See for example "targets" in `build.xml` of ANT and their dependencies among each other
+  * like `ant compile jar`
+  * or `pom.xml` files of Maven
+  * or `build.gradle` of Gradle
+
+## NodeJS
+* JavaSCript is the technology that made building modern dynamic web applications possible
+* JS paved the ways for various "client-side" view frameworks, like jQuery, AngularJS, ReactJS, Vue.js. 
+  * Remember that all of these are client-side frameworks; they don't have anything to do the the back-end code
+  * In the past, the backend would be programmed in Java, Ruby, Python, but not with JS
+* NodeJS took the JS out of the browser and made it possible to create backends such as web services using JS.
+* NodeJS has the distinguishing feature of the ability to handle a large number of concurrent connections using its **non-blocking IO** model
+* It is open source and free and compatible with different platforms
+* Currently the latest version of NodeJS is 13
+
+* `node -v` show version of installed NodeJS
+* `node my_program.js` to run your JS application
+* NPM is the package manager of NodeJS; the default public repository is `npmjs.com`
+* `npm -v` shows the version of NPM. NPM CLI utility is used to interact with the NPM repository
+* `npm search <some_package>` search and show information about a package
+* `npm install <package>`
+  * npm installs packages in a directory called `node_modules` under the current directory
+  * a directory with the name of the package containing license, readme, code (under `lib` folder) is created
+  * this folder also contains the `package.json` file which contains information about the package such as its version and author, dependencies, etc.
+* You can install package either in the current directory, or globally on the system
+* To use a package you can import it into your own code using e.g. `var file = require("file")`. This import the `file` package into your code and you can use it, for example `file.mkdirs("/tmp/dir1")`
+  * When we import a package, Node first looks under `node_modules` directory to see it finds the package
+  * If not, it looks in the global package dir of the system
+  * `node -e "console.log(module.paths)"` prints the module paths that `node` looks up.
+* To install a package globally: `npn install <package> -g`
+* Two types of modules: 
+  * Built-in modules are installed automatically when NodeJS is installed. They are under `/usr/lib/node_modules/npm/node_modules`; Examples are
+    *  `fs` to handle file system
+    *  `http` to host and HTTP server
+    *  `os` to work with OS
+    *  `events` to handle events
+    *  `tls` for TLS and SSL
+    *  `url` for parsing and working with URLs
+  * External modules are located in `/usr/lib/node_modules`; Examples are 
+    * `express` a popular web app framework
+    * `react` to create UIs
+    * `debug` to debug applications
+    * `async` to work with async JS
+  
+* `package.json` lists the dependencies of the application along their versions; it is important that these versions are specified properly and installed
+  
+## Python 
+
+* Free and open source cross platform programming language
+* To run Python programs we need the Python Interpreter
+* Python2 (2000-2010) vs. Python3 (2008-present)
+  * Python3 is not compatible backward compatible with Python2
+  * Python2 application must run on the Python 2 interpreter
+  * You can have both versions installed in a system at the same time `python2` command vs `python3` command
+
+* `which python`
+* `python2 --version`
+* `python my_app.py` runs the program
+
+* PIP is the package manager for python. It is installed along with Python
+* Similar to Python interpreter, you may have two versions of PIP `pip2` vs `pip3` installed
+* `pip -V` will tell you the version of the PIP and the corresponding Python version
+* `pip install <package>` to install a package, e.g. `pip install flask`
+
+* When python is installed it creates the folder `/usr/lib/python2.7/site-packages` or `/usr/lib/python3.6/site-packages` where the packages are installed; with separate paths for 32 bit or 64 bit packages
+* `pip show <package>` shows information about an installed package, including where it is installed
+  
+* To import a package you use `import <package_name>` in your code
+* To see the list of folders Python looks to find the package: `python -c "import sys; print(sys.path)"`
+
+* You can put all the package dependencies of the application to the `requirements.txt` file; then install them by `pip install -r requirements.txt`
+* You can also specify the specific version of the package that you want. If you don't specify the version number, `pip` automatically installs the latest version. This might sometimes lead to dependency problems, if the newest version of the lib has introduced breaking changes
+* `pip install <package> --upgrade` to upgrade an installed package
+* `pip uninstall <package>` to uninstall it
+
+* There are few other package manager available as well for Python:
+  * `easy_install` and Eggs: was the original way of installing python packages; A set of tools, called `setuptools` are used to package python code into a zipped format called **Eggs**, e.g  `app.egg`
+  * The `easy_install` package manager can then be used to search, find, and install these packages
+  * Think of Eggs as JARs in Java world
+  * You can install eggs by using `easy_install install <app_name>` or by downloading it and putting it where Python can find it (where Python looks for dependencies)
+  * Then the application can import the packages from Egg file. You don't have to unpack an Egg file
+  * `wheels`: and then came Wheels. Wheels are like Eggs (zipped packages applications). But they must be unpacked before installing. Wheels have extension `.whl`.
+  * You can install Wheel packages using `pip install app.whl`
+
+
 # SCM Basics
 
 
@@ -496,6 +590,7 @@ default         _gateway        0.0.0.0         UG    100    0        0 enp0s3
 
 
 # Security
+
 
 
 # General Prerequisites
