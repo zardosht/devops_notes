@@ -462,7 +462,28 @@ default         _gateway        0.0.0.0         UG    100    0        0 enp0s3
 
 
 # Applications Basics
+* compile, build, package, and deploy applications written in JavaScript, Java, and Python
 
+* compiled vs. interpreted languages
+
+* source code, byte code, machine code, compiler
+
+* `.pyc` files contain python byte code
+
+* Python or Java virtual machine translate byte code into machine code at runtime
+
+* packages, libraries, dependencies, package managers (`pip`, `npm`)
+
+* compile, test, package, deliver: CI/CD pipelines
+
+## Java
+* one of the most-widely used languages for building desktop, mobile, and web applications
+* latest version currently (2019) is Java 13
+* a lot of organizations are still stock at version 8 though; because version 9 introduced a lot of changes that made many popular tools and libraries incompatible; also some changes in licensing terms prevented companies from upgrading their applications
+
+* `java -version`
+* JDK: a set of tools to develop, build, and run Java applications: `jdb`, `javadoc`, `javac`, `jar`
+* JRE: needed runtime environment to run java programs on any system
 
 # SCM Basics
 
