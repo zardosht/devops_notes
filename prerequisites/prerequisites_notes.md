@@ -785,19 +785,100 @@ default         _gateway        0.0.0.0         UG    100    0        0 enp0s3
   * so the private keys have usually the work key in them and those that don't have the word key, are usually public key
   * in case of ssh the private key is called (depending on encryption method) `id_rsa` and public key is called `id_rsa.pub`
 
-
-
-
-
-
 # General Prerequisites
 
 ## YAML
 
+![alt](images/yaml-vs-xml-vs-json.png)
 
-## JSON and JSON Path
+* YAML:
+```
+Servers:
+  - name: Server1
+    owner: John
+    created: 12232014
+    status: active
+```
+
+* JSON:
+```
+{
+    "Servers": [
+      {
+        "name": "Server1",
+        "owner": "John",
+        "created": 12232014,
+        "status": "active"
+      }
+    ]
+}
+```
+
+* Key-value: !! pay attention to the space after the colon between key and the value
+```
+Fruit: Apple
+Vegetable: Carrot
+Liquid: Water
+Meat: Chicken
+```
+
+* Arrays: A dash in front of an item indicates it is an element of an array
+```
+Fruits:
+  - Orange
+  - Apple
+  - Banana
+
+Vegetable:
+  - Carrot
+  - Cauliflower
+  - Tomato
+
+```
+
+* Dictionaries: !! Equal number of blank space before properties of each item
+```
+Banana:
+    Calories: 105
+    Fat: 0.4 g
+    Carbs: 27 g
+
+Grapes:
+   Calories: 62
+   Fat: 0.3 g
+   Carbs: 16 g
+
+```
+
+* List of dictionaries:
+```
+Fruits:
+  - Banana:
+        Calories: 105
+        Fat: 0.4 g
+        Carbs: 27 g
+
+  - Grapes:
+        Calories: 62
+        Fat: 0.3 g
+        Carbs: 16 g
+
+```
+
+* Order of properties in a dictionary does not matter, where as the order of items in a list matters
+* Any line starting with a # is a comment
+
+## JSON and JSONPath
+* JSONPath is a query language for JSON, similar to XPath for XML: https://support.smartbear.com/alertsite/docs/monitors/api/endpoint/jsonpath.html
+* You can also use JSONPath for YAML
+* `$` is the root JSON element
+* All results returned for a JSONPath query are an array (within a pair of brackets `[    ]`)
+* Filtering: `$.store.book[?(@.price < 10)]`
+* https://kodekloud.com/courses/json-path-quiz/
+
 
 
 # 2 Tier Applications
+
 
 
