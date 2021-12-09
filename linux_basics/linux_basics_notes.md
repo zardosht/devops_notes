@@ -1,5 +1,7 @@
 # The Linux Basics Course
 
+* https://github.com/kodekloudhub/linux-basics-course
+
 * Working with Shell
 * Linux core concepts
 * Package Management
@@ -64,4 +66,6 @@
 * `man`: shows man pages of a command
 * `--help`, `-h`: most commands have this option to show help
 * `apropos`: searches through man page names and descriptions for a given keyword, useful when you want to look up all commands that contain a specific keyword
+
+* https://github.com/kodekloudhub/linux-basics-course
 
