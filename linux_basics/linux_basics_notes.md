@@ -72,4 +72,73 @@
 
 ## Bash Shell
 
-* 
+* Bourne Shell (`sh`) developed in 1970s for Unix and still in use today, C Shell (`csh` or `tcsh`), Korn Shell (`ksh`), Z Shell (`zsh`), Bourne Again Shell (`bash`)
+* Different shells may have different features and facilities, but they all serve the same goal: to facilitate communication between user and the operating system
+* `echo $SHELL` shows the current (default) shell being used
+* Bash is one of the most popular shells, because of the features like auto-completion and brace expansion which is not available in shells like Bourne Shell
+* `chsh` to change the default shell; it takes effect when you open a new terminal
+
+### Bash shell features:
+* Auto-completion
+* Aliases: `alias dt=date`
+* History: `history`
+* Environment variables: store information about user's login session that are used by the Shell when executing commands
+  * e.g. `$SHELL` or `$HOME`
+  * `env` to list all the environment variables
+  * `export` to set a new environment variables, e.g. `export OFFICE=munich`; This will set the variable for the current shell or any other process started by the shell
+  * You can also assign a variable with `export`, like simple `OFFICE=munich`. However this will only assign the variable within the shell and the value is not carried forward to any other process
+  * to make the environment variables persistent over subsequent logins or reboots add them to `~/.profile` or `~/.pam_environment` file
+  * `echo $LOGNAME`
+  * `echo $TERM`
+
+
+* `$PATH`: paths to search for the external commands
+* `which` command to check if the location of a command can be identified
+* `export PATH=$PATH:/opt/obj/bin` to extend the PATH
+
+### Customizing the Bash Prompt
+* `[~]$` bash prompt can be customized to show different information, for example the logged-in user and the host name
+* The bash prompt is set and controlled by a set of specific environment variables, the most common of them is `$PS1` for primary prompt
+* `echo $PS1`, prints for example `[\W]$` prints `[current working directory]$`
+* check the documentation for different directives you can use in `$PS1` to change the prompt: 
+  * `\d`: the date in Weekday Month Date format
+  * `\e`: an ASCII escape character (033)
+  * `\h`: the hostname HDQN
+  * `\n`: new line
+  * `\r`: carriage return
+  * `\s`: the name of the shell
+  * `\u`: username of the current user
+  * `\w`: current working directory
+  * `\$`: if effective UID is 0 prints a `#` otherwise a `$`
+
+
+# Linux Core Concepts
+
+## The Linux Kernel
+
+
+
+
+
+## Working with Hardware
+
+
+
+## Linux Boot Sequence
+
+
+
+
+## Runlevels
+
+
+
+
+
+## File Types
+
+
+
+## File System Hierarchy
+
+
