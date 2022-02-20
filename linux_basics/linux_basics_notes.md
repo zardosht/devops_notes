@@ -210,19 +210,74 @@
 * `lscpu` displays information about the CPU, such as architecture, socket number, number of cores, threads per core, vendor id, and model name
   * CPU(s) = sockets x cores per socket x threads per core
 
-* `lsmem`
+* `lsmem` list the available memory on the system
+  * `lsmem --summary`
+* `free -m`  shows the total available vs used memory on the system. `-m` shows the result in MB, `-k` in kB, `-g` in GB
 
+* `lshw` gives detailed information about entire HW configuration on a machine
+  * exact memory configuration
+  * Firmware version
+  * Mainboard configuration
+  * CPU version and speed
+  * Cache configuration
+  * Bus speed
+  * and much more
+  * `lshw` requires `sudo` to show all information
 
+* with `sudo` you can control which user can run commands as super user; you can also define which commands they can run, and even replay back commands they have run with root privileges.
 
 
 ## Linux Boot Sequence
 
+* Boot processes can be simplified divided into 4 major steps:
+  1. BIOS POST
+  2. Boot Loader (GRUB 2)
+  3. Kernel Initialization
+  4. INIT Process, service initialization using _systemd_
 
+* The Linux boot process can be initiated by
+  * starting a Linux device that is in _halted_ or stopped state
+  * or, by rebooting (aka resetting) the system
+
+* BIOS POST: Is the Power-on Self Test run by BIOS to ensure that device hardware are running correctly. If POST fails the computer may not be operable and the system will proceed to the next step after POST
+
+* After a successful POST, the BIOS loads and executes the boot code from a boot device, which is located at the first sector of the hard disk
+  * In Linux, this is located at the `/boot/` file system
+  * The boot loader provides the user with the boot screen, often with multiple options to boot into, such as MS Windows or Ubuntu 18.04...
+  * Once the user selects an option in the boot screen, the boot loader loads the kernel into the memory, supplies it with some parameters, and hands over the control to the kernel
+  * A popular example of a boot loader is GRUB 2, which stands for Grand Unified Bootloader version 2
+  * GRUB 2 is the primary boot loader for most current linux distros
+
+* After the selected kernel is loaded into the memory, it is usually decompressed. This is done, as the kernels are usually in a compressed state to save space.
+  * The kernel is then loaded into the memory and starts executing
+  * During this phase the kernel carries out a series of tasks, such as initializing HW and memory management tasks, ...
+
+* Once the kernel is completely operational
+  * it looks for an `init` process to run, which sets up the user space and the processes needed for the user's environment
+  * in most of the current day Linux distros, the `init` function then calls the `systemd` daemon
+  * the `systemd` is then responsible for bringing the Linux host to a usable state
+
+* `systemd` is responsible for
+  * mounting file system
+  * starting and managing services
+  * it is the universal standard these days
+  * but not too long ago, another initialization process called `SystemV` (read System Five, or Sys Five) init was used
+  * SystemV was for example used in RHEL 6 or CentOS 6 distros
+  * One of the key advantages of using systemd over SystemV is that it reduced system startup time by parallelizing startup of services
+
+* To check which init system is used run
+  * `ls -l /sbin/init`
+  * it output something like `lrwxrwxrwx   /sbin/init   ->    /lib/systemd/systemd` for systemd
+  * basically the `/sbin/init` is a link to the actual init process
 
 
 ## Runlevels
 
+* Linux can run in different modes, such as graphical mode
+* You can configure your system to boot into a specific mode
+* Modes are set by Runlevels
 
+* `runlevel` command shows the current operating mode of the system
 
 
 
@@ -233,3 +288,97 @@
 ## File System Hierarchy
 
 
+
+# Package Management
+
+## Package Management Introduction
+
+
+
+## RPM and YUM
+
+
+## DPKG and APT
+
+
+## APT vs. APT-GET
+
+
+
+# Working with Shell II
+
+## File Compression and Archival
+
+
+## Searching for files and patterns
+
+
+## IO Redirection
+
+
+## VI Editor
+
+
+
+# Security and File Permissions
+
+## Linux Accounts
+
+
+## User Management
+
+
+## Access Control Files
+
+
+## File Permissions and Ownership
+
+
+## SSH and SCP
+
+
+## Introduction to IPTABLES Rules
+
+
+## Securing the Environment
+
+
+## Cron Jobs
+
+
+# Networking
+
+## DNS
+
+## Networking Basics
+
+
+## Troubleshooting
+
+
+
+# Storage in Linux
+
+
+## Disks and Partitions
+
+
+## File System in Linux
+
+
+## DAS NAS and SAN
+
+
+## NFS
+
+
+## LVM
+
+
+
+# Service Management with SYSTEMD
+
+## Creating a SYSTEMD service
+
+
+## SYSTEMD Tools
