@@ -275,10 +275,42 @@
 
 * Linux can run in different modes, such as graphical mode
 * You can configure your system to boot into a specific mode
-* Modes are set by Runlevels
+* Modes are set by _Runlevels_
 
-* `runlevel` command shows the current operating mode of the system
+* `runlevel` command shows the current operation mode of the system, for example `3` or `5`
+  * Runlevel 5 is the operation mode that provides graphical user interface, runlevel 3 implies a non-graphical mode
+  * During boot the init process checks the runlevel and makes sure all the programs that are needed to make the system operational in that mode are started
+  * For example the graphical user mode requires a display manager service to run, so that the GUI can work. 
 
+* So a runlevel is basically a name for grouping of the programs that are needed to run for a specific operation mode of the system
+* Runlevel were used in SystemV and are not obsolete with systemd. 
+* SYSTEMD uses systemd targets instead
+* for example the runlevel 3 is called the `multiuser.target` and runlevel 5 is called `graphical.target`
+* Look at `man runlevel` for mapping between runlevels and systemd targets
+
+* `systemctl get-default` to get the default systemd target
+  * it looks up the file at `/lib/systemd/system/default.target` or `/etc/systemd/system/default.target`
+  * which is a link to the default target file, for example `/lib/systemd/system/graphical.target`
+  
+* `systemctl set-default multi-user.target` changes the default target
+  * output: `Created symlink /lib/systemd/system/default.target  -> /lib/systemd/system/multi-user.target`
+
+
+
+
+* https://askubuntu.com/questions/34308/where-is-the-inittab-file
+* ![alt](./images/runlevels.png)
+* ![alt](./images/runlevel-dirs.png)
+* In the runlevel dirs above, programs whose name starts with `S` are run during startup, and programs whose name starts with `K` are run during shutdown (kill); The sequence numbers define the order of running the programs, `S12`, `S50`, `S80`
+
+* The term runlevels is used in the sysV init systems. These have been replaced by systemd targets in systemd based systems. The complete list of runlevels and the corresponding systemd targets can be seen below:
+  * runlevel 0 -> poweroff.target 
+  * runlevel 1 -> rescue.target
+  * runlevel 2 -> multi-user.target
+  * runlevel 3 -> multi-user.target
+  * runlevel 4 -> multi-user.target
+  * runlevel 5 -> graphical.target
+  * runlevel 6 -> reboot.target
 
 
 ## File Types
