@@ -296,8 +296,6 @@
   * output: `Created symlink /lib/systemd/system/default.target  -> /lib/systemd/system/multi-user.target`
 
 
-
-
 * https://askubuntu.com/questions/34308/where-is-the-inittab-file
 * ![alt](./images/runlevels.png)
 * ![alt](./images/runlevel-dirs.png)
@@ -314,27 +312,136 @@
 
 
 ## File Types
+* Everything is a file in Linux
+  * i.e. Every object in Linux can be considered to a be a type of file. Even a directory is a special type of file. 
 
+* There are three file types in Linux
+  * Regular: normal files, like text, shell scripts, images, etc.
+  * Directory: a type of files that contains other files 
+  * Special files:
+    * Character files: represent the devices under `/dev/` file system. These allow the OS to communicate with IO devices *serially*. Examples include devices such as mouse and keyboard. 
+    * Block files: these are files representing *block devices*, also located under `/dev/`. Block devices write and read data from device in blocks (chunks of data), for example hard disk and RAM. `lsblk` lists block devices.
+    * Links: links are a way to associate two of more file names to the same file containing data. There are two kinds of links:
+      * Hard links: associates two are more file names with the same block of data on the physical disk. Although they behave as independent files, *deleting one link with delete the data*
+      * Symbolic links: or symlinks are like pointers to the data in a file. They can be loosely compared to shortcuts in Windows. Deleting a symlink does not delete the data. 
+    * Sockets: sockets enable communication between two process
+    * Named Pipes: allow connecting one process as an input to another. The dataflow in a pipe is *unidirectional* from the first process to the second. 
+
+* `file` command displays the file type
+* `ls -l` also shows the file type as the first letter before permissions: `d`: directory; `-` regular file; `c` character file; `l` link; `s`: socket; `p`: pipe; `b`: block device;
 
 
 ## File System Hierarchy
 
+* `/home`: home dir for all users except the root
+* `/root`: home for root
+* `/opt`: put any third-party programs here, for example install a web app there
+* `/mnt`: mounted file systems using `mount` command
+* `/tmp`: temp
+* `/media`: all external media (USB disk, external hard disk, etc) are mounted here
+  * `df -hP`: disk free, `-h` human readable, `-P` portability POSIX output format; lists information about all mounted file systems
+* `/dev`: contains character and block file devices
+* `/bin`: contains the basic programs in binary, e.g. `cp`, `mv`, `mkdir`, `date`, ...
+* `/etc`: stores most of the configurations
+* `/lib` and `/lib64`: shared libraries used by different programs are stored here
+* `/usr`: was used for user home directories, but in modern Linux it is the location where all the *user land* applications, libraries, and their data resign. For example, Thunderbird, FireFox, vi, ...
+* `/var`: is where the systems writes data of the running systems, such as logs and cached data
 
 
 # Package Management
 
 ## Package Management Introduction
 
+* There are 100s of Linux distros in use today. One of the ways to categorize distros is based on the package manager they use.
+  * For example, distros such as RHEL, CentOS, Fedora are based on RPM package manager. They are known as RPM-based distros. RPM packages have the extension `.rpm`
+  * Debian, Ubuntu, Arch Linux, Linux Mint, ... use the Debian Package Managers, such as DPKG. Debian packages have the extension `.deb`
+
+* A package is a compressed archive that contains all the files that are required for a software to run
+* For example, to instal GIMP (GNU Image Manipulator) on Ubuntu we use the package `gimp.deb`. It contains all the files needed for GIMP to run, such as Application Binaries, Metadata, Configuration files, ...
+* You can basically download a package and install it on the Linus using the `.deb` or `.rpm` package file. So why do we need a package manager? 
+* A packages manager takes care of all the dependencies of a package and their transitive dependencies and makes sure all the software and dependencies are compatible with the installed Linux distro and version. 
+* `dpkg -i gimp.deb` installs GIMP. But it fails if GIMP's dependencies are not installed on the system. 
+* A package manager provides a consistent process of installing, configuring, upgrading, and removing packages on a Linux system
+* Some of the essential functions of a Package Manager are: 
+  * Ensuring the integrity and authenticity of packages, by verifying their digital certificates (digitally signed code) and their checksums. This is to ensure that the package is downloaded from a trusted source and is safe to install
+  * Simplified Package Management process: Most Package Mangers provide powerful tools for querying packages in a package repository, downloading, installing, or updating existing software
+  * Grouping packages by their function
+  * Managing dependencies and avoiding dependency hell
+
+* Different packages managers, depending on distro: 
+  * DPKG: (Debian Package) base package manager of Debian-based distros
+  * APT: (Advanced Package Tool) a newer frontend for DPKG found in newer distros such as Ubuntu, Linux Mint, Elementary OS, ...
+  * APT-GET: traditional frontend for the DPKG in Debian-based distros
+  * RPM: (RPM Package Manager, or Red Hat Package Manager) base package manager found in Red Hat-based distributions, such as RHEL, CentOS, Fedora
+  * YUM: a frontend for the RPM found in RedHad-based distros
+  * DNF: a more feature-rich frontend for the RPM. 
 
 
 ## RPM and YUM
 
+* RPM is used in Red Had-based distros, such as RHEL, CentOS, fedora, ...
+* RPM packages have extension `.rpm`
+* RPM has five base modes of operations: 
+  * Install: `rpm -ivh telnet.rpm`: install a package, `-i` install, `-v` verbose
+  * Uninstall: `rpm -e telnet.rpm`
+  * Upgrade: `rpm -Uvh telnet.rpm`
+  * Query: The RPM database at `/var/lib/rpm` store information about all the packages installed on the system, such as which packages are installed, which version each package is, and any changes to any files after installation. `rpm -q telnet.rpm` queries this database and gives information about a packages
+  * Verify: `rpm -Vf <path to file>` verifies a package to make sure it is installed from a trusted and secured source. It compares information about the files installed from package, with the same information from the package metadata
+* RPM *does not resolve package dependencies on its own*. That's why we use a higher-level package manager called YUM
+  
+* YUM (Yellow Dog Updater Modifier) works on RPM-based distros. Talks to RPM software repositories. 
+* Repository info is stored at `/etc/yum.repos.d`. Repository files have a `.repo` extension.
+* YUM is a high-level package manager that relies on RPM to mange packages
+* YUM handles package dependencies unlike RPM
+* Software repositories can be local or on the network. Usually the distro comes bundled with its own software repositories, e.g. `/etc/yum.repos.d/redhat.repo`. You can add new repos in `/etc/yum.repos.d` if the software is not found in the official repo, not the lates version, for example `/etc/yum.repos.d/nginx.repo`
+* How YUM works: `yum instal httpd`
+  * YUM first checks if the package is installed on the system
+  * If not, it checks all the configured repos for the availability of package
+  * It checks if any dependencies of the software is installed or needs to be upgraded.
+  * A *transaction* report is shown to the user to confirm
+  * Download and install the necessary `.rpm` packages
+
+* `yum repolist`: show all the repos added to the system
+* `yum provides scp`: to check which package to be installed for `scp` command to work
+* `yum remove httpd`: remove a package
+* `yum update telnet`: update a package
+* `yum update`: update all the packages and their dependencies on the system
+
 
 ## DPKG and APT
 
+* DPKG is the base package manager on Debian-based distros (similar to RPM in Red Hat-based distros)
+* It can be used to 
+  * Install/Upgrade
+  * Uninstall
+  * List
+  * Status
+  * Verify
+* Debian packages have `.deb` extension
+* `dpkg -i telnet.deb` install a package
+* `dpkg -r telnet.deb` remove a package
+* `dpkg -l telnet` list packages with their version number and short description
+* `dpkg -s telnet` to see the status of a package and if it is installed on the system
+* `dpkg -p <path to file>` to display information about the package, such as version number, maintainer, ...
 
-## APT vs. APT-GET
+* DPKG does not resolve dependencies (similar to RPM). We have to rely on higher-level package managers such as APT or APT-GET
+* APT and APT-GET are higher level package managers on Debian-based systems
+  * APT (Advanced Package Tool) is more user-friendly and newer that APT-GET
+* APT (similar to YUM) relies on software repos for downloading software. Software repos for APT are in `/etc/apt/sources.list`. The repo can be a local one on local file system or on a CD, or it can be remote, accessed over FTP, HTTP, HTTPS
+  
 
+* `apt update`: refresh the repos by downloading all package information from all the sources; run it after adding a new repo, or before installing any new package
+* `apt upgrade`: upgrade all packages
+* `apt edit-sources`: opens up the `/etc/apt/sources.list` in a text editor
+* `apt install telnet`: install
+* `apt remove telnet`: remove
+* `apt search telnet`: look up for a package in the repos
+* `apt list | grep telnet`: list all the packages (installed and not installed)
+
+* Difference APT and APT-GET:
+  * more user friendly
+  * progress bar
+  * `apt search search` vs. `apt-cache search telnet`
 
 
 # Working with Shell II
