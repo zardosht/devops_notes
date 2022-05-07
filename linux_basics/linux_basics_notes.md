@@ -1,5 +1,6 @@
 # The Linux Basics Course
 
+
 * https://github.com/kodekloudhub/linux-basics-course
 
 * Working with Shell
@@ -11,7 +12,14 @@
 * Storage in Linux
 * SystemD and Services
 
+* https://www.cs.ait.ac.th/~on/O/oreilly/unix/upt/ch08_19.htm
+
 # Working with Shell 
+
+* https://www.vanimpe.eu/2014/01/18/different-shell-types-interactive-non-interactive-login/
+* https://unix.stackexchange.com/questions/38175/difference-between-login-shell-and-non-login-shell
+* https://en.wikipedia.org/wiki/Unix_shell
+* 
 
 * REPL: Read-Eval-Print Loop
 * Command, Argument, Options (aka. switches, flags)
@@ -445,23 +453,211 @@
 
 
 # Working with Shell II
+* Linux is very user friendly; it is just very selective who it is friends with :D 
 
 ## File Compression and Archival
+* `du`: Disk Usage shows size of files and directories 
+* `du -sk`: shows size of file or dir in Kilo Bytes
+* `du -sh`: shows the size in human readable format
+* `ls -lh`: also shows the human readable size of the file in the listing
+
+
+* tar (tape archive) creates a single archive of multiple files. Archive files created with TAR are sometimes called tarballs
+* `tar -cf test.tar file1 file2 file3` creates an archive of the files. `-c` for create, `-f` for the filename of the archive
+* `tar -tf test.tar` list the content of the file. `-t` or `--list`
+* `tar -xf test.tar` extracts the archive
+* `tar -zcf test.tar file1 file2 file3` creates a compressed (zipped `-z`) archive
+
+* There are different programs for compressing files on the Linux:
+  * `bzip2`
+  * `gzip`
+  * `xz`
+* For decompressing:
+  * `bunzip2`
+  * `gunzip`
+  * `unxz`
+* For listing the content of the zipped file without decompressing it:
+  * `bzcat`
+  * `zcat`
+  * `xzcat`
+* The size of compressed file depends on the type of the data and the compression algorithm
 
 
 ## Searching for files and patterns
+* `locate City.txt`  searches for a keyword and returns all paths in the file system with the keyword
+  * The downside of `locate` is that it it depends on a database at `/var/lib/mlocate/mlocate.db`
+  * the `mlocate.db` is updated once a day by a `cron` job
+  * `sudo updatedb` updates the locate database
+
+* `find /home/michael -name City.txt` searches for a file called `City.txt` under the directory `/home/michael`
+  * `find` is a very powerful command with many options
+
+* `grep <pattern> <filename>` searches within files for a given pattern
+* `grep -i` search case-insensitive
+* `grep -r` search recursively within all files in a directory and its subdirectories
+* `grep -v` list the opposite. It prints all lines that does not contain the pattern
+* `grep -w` search for whole word
+* `grep -A<X>` and `grep -B<X>` print X number of lines after or before the line matching the pattern
+  * similar to `-context <X>`
 
 
 ## IO Redirection
+* In Bash and other Linux shells, when a program is executed, it uses three standard I/O streams. Each stream is represented by a numeric file descriptor:
+  * 0 - stdin, the standard input stream.
+  * 1 - stdout, the standard output stream.
+  * 2 - stderr, the standard error stream.
+  * A file descriptor is just a number representing an open file.
+* `echo $?` prints the exit code of the program
+
+* With IO Redirection, the standard input, output, and error can be redirected to text files
+* `echo $SHELL > shell.txt`. The `>` OVERWRITES the content of the file with the output of the STDOUT of the command
+* `echo "hello" >> shell.txt`. The `>>` appends the stdout to the end of file
+
+* To redirect the error messages (stderr) use `2>`
+* To suppress the error messages from being displayed on the screen, redirect stderr to /dev/null: `command 2> /dev/null`
+* `/dev/null` is Null Device, also called Bitbucket. Everything written to it will be discarded.
+* To redirect stderr to stdout and have error messages sent to the same file as standard output, use the following:
+  * `command > file 2>&1`
+  * `> file` redirect the stdout to `file`, and `2>&1` redirect the stderr to the current location of stdout.
+  * The order of redirection is important. For example, `command 2>&1 > file` redirects only stdout to file. This happens because the stderr is redirected to stdout before the stdout was redirected to file.
+  * Another way to redirect stderr to stdout is to use the `&>` construct. In Bash `&>` has the same meaning as `2>&1`: 
+  * `command &> file` is the same as `command > file 2>&1`
+
+* `grep -r hello /sys/ > /dev/null 2>&1` nothing is printed. stdout is redirected to `/dev/null` and stderr is redirected to stdout. So, everything (stdout, stderr) is sent to `/dev/null`
+* `grep -r hello /sys/ &> /dev/null` does the same
+* to see the exit code of the program use `echo $?`
+
+* A Pipe `command1 | command2` makes the stdout of the `command1` to be the stdin of `command2`
+* `tee` The tee command reads from the standard input and writes to both standard output and one or more files at the same time. tee is mostly used in combination with other commands through piping.
+* `command | tee file1.out file2.out file3.out` write the output of the command to stdout and also the the files
+* `tee -a` appends the file instead of overwriting
+* `tee` is handy in combination with `sudo`
+  * `sudo echo "newline" > /etc/file.conf` does not work, because the redirection is not run by `sudo` but with the unprivileged user. It will result in `bash: /etc/file.conf: Permission denied`
+  * `echo "newline" | sudo tee -a /etc/file.conf` will do the work
+
+* https://www.cs.ait.ac.th/~on/O/oreilly/unix/upt/ch08_19.htm
+* https://unix.stackexchange.com/questions/159513/what-are-the-shells-control-and-redirection-operators
+
+* https://www.cs.ait.ac.th/~on/O/oreilly/unix/upt/ch08_19.htm
 
 
 ## VI Editor
+* Using `cat > blah.txt` we can start typing and into file `blah.txt`. Pressing `CTRL-D` (EOT, End-of-Transmission) writes the typed text into file. 
 
+* `vi <filename>`
+* vi Operation Modes:
+  * Command mode: give commands to the editor, such as copy, paste, delete, navigate between lines, ... Press `Esc` to go to command mode from other modes
+  * Insert mode: lets you enter text. Press `i`, `a`, `o`, `I`, `A`, `O` (each doing a different thing)  to go insert mode. 
+  * Last line mode: commands to save changes, discard changes, exit, ... Press `:` to go to Las line mode
+  * default mode is command mode
+
+* Command mode: 
+  * `k j l h` to move the cursor
+  * `v` for highlighting in visual mode
+  * `yy` copy (yank) line
+  * `p` paste
+  * `ZZ` save the file
+  * `x` delete the letter at cursor
+  * `dd` delete line
+  * `dNd` delete N lines from current line
+  * `u` undo
+  * `r` redo
+  * `/` find text downward, press `n` next down, `N` next up, `?` search upward (revers)
+
+* Insert mode: 
+  * `i`, `a` insert text before, after cursor
+  * `I`, `A` insert in the line before, after cursor
+  * `o`, `O` insert new line before, after cursor
+
+* Last line (commend line) mode:
+  * `:` activate command line mode
+  * `:w` save teh file
+  * `:q` exit
+  * `:wq` write and quit
+  * `:q!` quit without saving
+
+* VIM: Vi Improved is a newer more feature rich version of vi
+  * in most distros the command `vi` is a symlink to `vim`
 
 
 # Security and File Permissions
 
+* Basic security and identifying file types
+* Creating users and groups
+* Managing file permissions and ownerships
+* Special directories and files
+
+![alt](./images/security_in_linux.png)
+
+* Security in Linux includes many aspects, amongst others:
+  * Access Control
+  * PAM: Pluggable Authentication ModulesLinux Pluggable Authentication Modules (PAM) is a suite of libraries that allows a Linux system administrator to configure methods to authenticate users. It provides a flexible and centralized way to switch authentication methods for secured applications by using configuration files instead of changing application code.[1] There are Linux PAM libraries allowing authentication using methods such as local passwords, LDAP, or fingerprint readers.[2] Linux PAM is evolved from the Unix Pluggable Authentication Modules architecture. Linux-PAM separates the tasks of authentication into four independent management groups:
+    * account modules check that the specified account is a valid authentication target under current conditions. This may include conditions like account expiration, time of day, and that the user has access to the requested service.
+    * authentication modules verify the user's identity, for example by requesting and checking a password or other secret. They may also pass authentication information on to other systems like a keyring.
+    * password modules are responsible for updating passwords, and are generally coupled to modules employed in the authentication step. They may also be used to enforce strong passwords.
+    * session modules define actions that are performed at the beginning and end of sessions. A session starts after the user has successfully authenticated.
+    * https://en.wikipedia.org/wiki/Linux_PAM
+  * Network Security: Mostly using Firewall rules, IP Tables, ...
+  * SSH Hardening: Make sure only authorized users have remote access to a Linux system
+  * SELinux: Security-Enhanced Linux (SELinux) is a Linux kernel security module that provides a mechanism for supporting access control security policies, including mandatory access controls (MAC). SELinux is a set of kernel modifications and user-space tools that have been added to various Linux distributions. Its architecture strives to separate enforcement of security decisions from the security policy, and streamlines the amount of software involved with security policy enforcement. The key concepts underlying SELinux can be traced to several earlier projects by the United States National Security Agency (NSA).
+
 ## Linux Accounts
+* Every user has an account in Linux:
+  * User account maintains the information such as username and password used to login to the system
+  * A user account contains an identifier called **UID**, which is unique for each user
+  * Information about user accounts is stored in `/etc/passwd` file
+
+* A group is a collection of users; it is used to organize users based on common attributes such as role or function
+  * Information about groups is stored in `/etc/group` file
+  * Each group has a unique identifier called **GID**
+  * Groups can be used to grant access to files and directories to a group of users
+
+* A user account contains:
+  * username
+  * UID, user ID
+  * GID, the ID of the group the user is part of. Each user is member of a default group with the same ID as the UID (a group with the same name as username). It is assigned if no group is defined for the user when it is created. This is the primary GID of the user. A user can be member of multiple groups. 
+  * information about user's home dir e.g. `/home/<username>`
+  * default shell for the user, e.g. `/bin/sh`
+
+* `id` command prints information about the user: uid, gid, groups
+* `grep -i <username> /etc/passwd` prints the entry of the user in the `/etc/passwd` file, showing username, uid, gid, home dir, default shell, ...
+
+![alt](./images/user_account.png)
+
+* There are other types of accounts apart from normal users:
+  * super user account: root, uid=0; Root has unrestricted access to everything on the system
+  * system accounts: created when the OS is installed, and are used by the programs and software that is not supposed to run as root. Examples are ssh, mail,... These accounts have uid below 100 or between 500 to 1000; They normally don't have a home directory, of if they have, it is not under `/home`
+  * service accounts: are similar to system accounts and are created when services are installed, such as nginx, mercury, ...
+  
+![alt](./image/../images/account_types.png)
+
+* Commands to see information about users:
+  * `id`: shows information about a user
+  * `who`: shows a list of users currently logged in to the system
+  * `last`: shows a record of all logged in users, and date and time the system was last rebooted
+
+![alt](./images/id_who_last.png)
+
+* Switching user:
+  * `sudo`: run programs with the security privileges of another user, by default the superuser.
+  * `su`: switch to any other user, e.g `su jane` and enter jane's password. When used with a hyphen e.g. (`su - jane`) it can be used to start a login shell. In this mode users can assume the user environment of the target user. `su -` login as root
+  * `su -c <username>` The meaning of “command” is slightly different: for `su -c`, it's a string that's executed by the target user's shell, whereas for `sudo` with no options, it's a program to run with arguments. But for common usage, they're the same.
+  * https://askubuntu.com/questions/620936/difference-between-su-and-sudo-su
+  * https://askubuntu.com/questions/70534/what-are-the-differences-between-su-sudo-s-sudo-i-sudo-su
+  * https://askubuntu.com/questions/331062/what-is-the-functional-difference-between-sudo-su-and-sudo-i
+  * https://unix.stackexchange.com/questions/16334/what-is-the-difference-between-sudo-and-su-c
+
+* `shopt`: This builtin allows you to change additional shell optional behavior.
+
+* sudo:
+  * `/etc/sudoers`: defines the policy used by the `sudo` command
+  * `visudo` update the `/etc/sudoers` command
+  * only users listed in the `/etc/sudoers` can use `sudo` for privilege escalation
+  * using `/etc/sudoers` users can be granular privileges to use `sudo`, for example which command can a user run using sudo
+  * the syntax of the `/etc/sudoers` file: user or group, e.g. root, or %admin; hosts; as-user:as-group; command. In all cases ALL means no restriction
+
+* Using `sudo` we can eliminate the need to ever login as root
+  * by setting `/usr/sbin/nologin` as the default shell for the root user
 
 
 ## User Management
