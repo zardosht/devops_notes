@@ -661,24 +661,221 @@
 
 
 ## User Management
+* `useradd bob`
+  * creates a user with name `bob` using system generated GID and UID
+  * creates the home folder for the users under `/home/bob`
+  * sets the default shell to `/bin/sh`
+* `grep -i bob /etc/passwd`
+* `passwd bob`: set the password for user bob
+* `grep -i bob /etc/shadow`
+  * `/etc/shadow` file contains hashed passwords of the users
+* `whoami` prints the user name of the current user
+* `passwd` change password 
+* Common options for `useradd`
+  * `-c` add a custom command
+  * `-d` custom home directory
+  * `-e` account expiration date
+  * `-g`, `-u` custom GID and UID
+  * `-s` specify the shell
+  * `-G` add user to multiple secondary groups
+
+* `useradd -u 1009 -g 1009 -d /home/robert -s /bin/bash -c "Mercury project member" -G docker mercury bob`
+* `id bob`
+
+* `userdel bob`: delete user bob
+* `groupadd developer`: add a group with name developer
+* `groupadd -g 1011 developer` add a group with name developer and custom GID 1011
+* `groupdel developer` delete the developer group
 
 
 ## Access Control Files
+* Access control files are stored under `/etc/` directory, which is by default readable by everyone and writeable by root
+  * `/etc/passwd`: the password file, contains information about users, like username, UID, GID, optional information, home dir, default shell
+  * `/etc/shadow`: contains hash of user passwords and information about its duration and expiration date
+  * `/etc/group`: information about groups
+  * The access control files are not plain text editable and are supposed to be changed only through built-in commands such `passwd` or `useradd` to change them
+  * The fields in access control files are separated using a colon `:`
+
+* `/etc/passwd`
+  * Fields are `USERNAME:PASSWORD:UID:GID:GECOS:HOMEDIR:SHELL`
+  * Password is not saved here. It is located in `/etc/shadow`
+  * `GECOS` is csv user information such as full name, location, phone number, etc.
+
+* `/etc/shadow`
+  * Fields are: `USERNAME:PASSWORD:LASTCHANGE:MINAGE:MAXAGE:WARN:INACTIVE:EXPDATE`
+  * `PASSWORD` is the hash of user's password. An empty or `*` means no password is set
+  * `LASTCHANGE`: last time password was changed as epoch timestamp
+  * `MINAGE` and `MAXAGE`: min days before password can be changed; max days after which the password must be changed
+  * `WARN`: number of days to warn user for changing the password
+  * `INACTIVE`: number of days after password has expired, that the password is still active and can be used. Empty means not set.
+  * `EXPDATE`: epoch timestamp when the password will expire. Empty means not set
+
+* `/etc/group`:
+  * Fields: `NAME:PASSWORD:GID:MEMBERS`
+  * `MEMBERS` is the comma separated list of usernames that are members of this group
 
 
 ## File Permissions and Ownership
 
+* `ls -l` command list the files with their type and permissions
+  * `-rwxrwxr-x`
+  * The firs column determines the type of file: `-` normal file; `d` directory; `l` link; `c` character device file; `b` block device file; `s` socket file (or sticky bit); `p` name pipe
+
+* Permissions are Read (`r`, octal 4), Write (`w`, octal 2), Execute (`x` octal 1), or no permission (`-` octal 0)
+  * Each file or directory has a user owner and a group owner
+  * Permissions are in sequence for User owner, for Group owner, and for Others
+  * Execute (`x`) for directory means user can `cd` into directory
+  * If the current user is the user owner, then permissions for user owner are considered, and the rest (permissions for group and others) are not considered.
+  
+* `chmod <permissions> <file>` sets the permissions
+  * permissions can be set using symbolic notation or octal notation
+  * `chmod +rwx myfile` sets all permissions for user, group, and others
+  * `chmod u+rwx myfile` sets read, write, execute for user
+  * `chmod ugo+r-x myfile`
+  * `chmod o-rwx myfile` remove rwx from others
+  * `chmod u+rwx,g+r-x,o-rwx myfile`
+  * `chmod 775 myfile` sets rwx for user and group and r-x for others
+
+* `chown owner:group file` changes the user owner and group owner of the file
+  * if no group is provided, only the user owner is changed
+
+* `chgrp` changes the group owner of a file
+  * `chgrp developers myfile`
+
 
 ## SSH and SCP
+
+* SSH: used to login into remote systems
+  * `ssh <hostname OR IP address>` of the remote machine; no user name is specified, it tries to login as the current user
+  * `ssh <username>@<hostname OR IP address>`
+  * `ssh -l <user> <hostname OR IP address>`
+  * For SSH the remote host must have an SSH server process running and port 22 on remote host must be accessible by the client
+  * Your computer is SSH client and remote host is SSH server
+  * Instead of password, SSH keys can also be used for authentication
+  
+* Using SSH keys you can authenticate without password
+  * Key pair: public key and private key
+  * `ssh-keygen -t rsa` generates the key pair
+    * Key pair is stored in `~/.ssh/` public key `id_ras.pub` and private key `id_rsa`
+  * The public key must be copied to the remote host
+  * `ssh-copy-id <user>@<remote_host>` copies the public key to the remote server. It requires the user's password on remote server to be entered obviously
+    * It copies the content of the public key to the `~/.ssh/authorized_keys` file on remote host
+
+* `scp` copy data between hosts over SSH
+  * `scp <source path> <host>:<target path>`
+  * `scp <host>:<source path> <target path>`
+  * `scp -r` copies directories
+  * `scp -p` preserve permissions
 
 
 ## Introduction to IPTABLES Rules
 
+* Network security using IPTABLE rules
+* In a large network network connectivity, such as allowing SSH connections to a host from a specific IP range, is manged by firewall devices (such as Cisco ASA, Juniper NGFW, Fortinet, ...). Using tools like `IPTables` or `FirewallD` we can also apply network security rules on each individual host. This is similar to firewall rules on Windows.
+
+* Assume we have a client laptop with an IP of 172.16.238.187, and Application server DEVAPP01 with IP of 172.16.238.10, and a DB server DEVDB01 with IP of 172.16.238.11.
+  * Since we don't have any firewall devices in network, every host can ssh to every other host
+  * We need to improve the security by adding firewall rules on individual hosts and restricting network access
+  * Client laptop should have SSH connectivity to application server
+  * Application server runs the application on port 80 which should be accessible by the client laptop
+  * Database server runs the DB on port 5432. The application server needs to have access to DB on this port
+  * The application server also needs to have access to a software repository server at 172.16.238.15
+  * We also want to block outgoing internet access from the application server
+  * We also want that DB server only accept connection for application server on port 5432
+
+* `iptables` is the command we use to configure network connectivity; it is installed on RHEL and CentOS; On Ubuntu you need to install it: `sudo apt install iptables`
+* `sudo iptables -L` to list the rules configured on the system
+
+```
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination  
+```
+
+* There are three types of rules (chains):
+  * INPUT: govern incoming traffic; for example to allow ssh to current host, an INPUT rule must be configured for port 22 and client IP or IP range
+  * FORWARD: typically used in network routers, where the data is routed to other nodes on the network; not commonly used on a Linux server
+  * OUTPUT: govern outgoing traffic; for example to allow app server to connect to a DB server on port 5432
+  * The default for each chain (rules) is ACCEPT as long as no rule is defined
+
+* Why are the rule sets called chains? Because each chain can have multiple rules within it, as a chain of rules.
+  * Each rule inspects a packet based on its defined conditions; if the condition is met, the packet is either dropped or accepted based on the rule; if the condition is not met, the packet is passed to the next rule
+  * The order of the rules is important. The rules in a chain are evaluated from top to bottom. New rules are added to the bottom of the chain.
+  * Rules can have conditions such as:
+    * source IP or hostname
+    * destination IP or hostname
+    * port
+    * protocol
+  * Regarding changing the order of the rules: https://unix.stackexchange.com/questions/146349/move-iptables-rule-w-o-removing-and-adding
+
 
 ## Securing the Environment
 
+* Now let's secure the above example environment:
+  * To allow client laptop to do ssh to application server, add the following rule on application server:
+  * `iptables -A INPUT -p tcp -s 172.16.238.187 --dport 22 -j ACCEPT`
+  * Note that since there is no other rule defined, if another client tries to connect, it goes through the default accept policy and is accepted; so we need to add another INPUT rule to drop the traffic from any other client except client1:
+  * `iptables -A INPUT -p tcp --dport 22 -j DROP`
+  * the above rule will drop packets from any source, since it does not have the `-s` specified
+  * Each new rule is added to the bottom of the chain. The order of the rules is important. Rules are evaluated from top to bottom. This means that in case of multiple rules matching a packet, the rule that is first in the list, is applied and the others below it are ignored. 
+  * Regarding changing order of rules: https://unix.stackexchange.com/questions/146349/move-iptables-rule-w-o-removing-and-adding
+
+* The rest of rules on application server for our example network are as follows:
+* ![alt](./images/iptables_rules.png)
+* ![alt](./images/iptables_rules2.png)
+* Similarly on the DB server we need to add a rule that accepts incoming traffic from app server on port 5432; and also another rule that drops all other traffic
+
+* `iptables -I` will insert the rule at the top of the chain instead of bottom
+* `iptable -D INPUT 5` deletes the fifth rule from INPUT
+
+* Note that the outgoing connection from app server to DB server is on prot 5432 of the DB server. Now, how are the responses from the DB server allowed to reach back to app server?
+  * App server makes a connection to port 5432 on DB server (we defined rules that allow it: an outbound rule on app server and an inbound rule on DB server). When the connection is established, the response data is returned back from DB server to the IP of the app server _and a random port_. 
+  * To validate this, run a `netstat` command on either the source or destination server and search for the port 5432:
+  * `netstat -an | grep 5432` on app server
+  * Result: `tcp       0        0    172.16.238.10:44060          172.16.238.11:5432        ESTABLISHED`
+  * The destination port is 5432 as expected, but the source port on the app server is randomly selected from free ports and is 44060
+  * Now, remember that we defined a drop rule only for SSH traffic on app server. All other traffic is allowed. Hence the response traffic from DB server to the randomly selected port is allowed.
+  * The port 44060 for returning traffic from DB on the app server is an _ephemeral port_ (https://en.wikipedia.org/wiki/Ephemeral_port), meaning that returning connections from DB server will not always use that same port on app server; In most Linux kernels any port between 32768 and 60999 can be used for such connections (this is called Ephemeral Port Range)
 
 ## Cron Jobs
+* Cron can be used to schedule jobs in Linux
+* Imagine we want to regularly, e.g. everyday at 9 p.m., run the command `uptime` and redirect its result to a file `/tmp/system-report.txt`:
+  * `uptime >> /tmp/system-report.txt`
+
+* Cron helps doing such task
+* With a Cron job, the user can specify any date, time, or frequency to schedule a task. Once set, the system will execute the task at the given time automatically
+* `crond` service that runs in the background takes care of executing the tasks at the defined times.
+
+* To schedule a job:
+  * `crontab -e` with the user you want to run this task
+  * The `-e` option is used to edit the current crontab using the editor. After you  exit from the editor, the modified crontab will be installed automatically.
+  * Each user can have their own crontab, and though these are files in `/var/spool/cron/crontabs`, they are not intended to be edited directly.
+  * It will open the `crontab` in the vi editor
+  * At the bottom of the file specify the job to be scheduled
+  * `0 21 * * *   uptime >> /tmp/system-report.txt`
+  * The first five fields are used to specify the exact schedule to run the task
+  * The sixth field is the command to run
+
+* `crontab -l`  the current crontab is displayed, listing all the scheduled jobs
+* IMPORTANT: Do not use `sudo` with the `crontab`. Otherwise the jobs will be scheduled for the root user. Also if using `su` make sure that you use `-u` to set the 
+
+* Scheduling jobs: 
+  * The five fields are: minute   hour   day   month   weekday
+  * A `*` means any value
+  * `10   8   19   2   1` sets a job t be run at 10 past 8 every 19th of February only if that day is a monday (weekday 1)
+  * `10   8   19   *   *` runs the job at 10 past 8 on 19th of every month
+  * `10   8   *    *   *` runs the job at 10 past 8 every day
+  * `*    *   *    *   *` runs the job every minute
+  * `*/2` is a step value, it means for example every second minute
+
+* Side note:
+  * `tail /var/log/syslog`
+  * shows what has happened on the system, such as execution of cron jobs
 
 
 # Networking
