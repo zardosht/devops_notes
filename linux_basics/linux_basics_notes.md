@@ -880,12 +880,110 @@ target     prot opt source               destination
 
 # Networking
 
+* DNS
+* Basic Networking concepts:
+  * Switching
+  * Routing
+  * Gateways
+
 ## DNS
+* Imagine two computers host-1 and host-2 both connected over their `eth0` adapter with the IP addresses 192.168.1.10 and 192.168.1.11
+* `ping <IP address>` to test connectivity use `ping`
+* Beside IP addresses, hosts can also have names. For example the DB server at 192.168.1.11 could have hostname  `db`
+* Mapping between IP addresses and hostnames can be set in `/etc/hosts` file:
+
+```
+$ cat >> /etc/hosts
+192.168.1.11          db
+```
+
+* Now `ping db` will work
+* Note that whatever is in `/etc/hosts` is the source of truth. For example on host-1 the name db is mapped to IP address of host-2. host-a does not care if the real name of host-2 is host-2. It simply maps IP 192.168.1.11 to db or the name db to IP 192.168.1.11. You can have any number of entries in hosts file mapping any IP to any name (note the security issue: you can this way fool a machine as if it is communicating with host named www.google.com, although it is communicating with some other host)
+* Every time we use a hostname in a command, it looks up in `/etc/hosts` file to find the IP address for the hostname. This is called _Name Resolution_
+
+* `dig` and `nslookup` can be used to lookup the IP address for a hostname. `dig` should be preferred: https://unix.stackexchange.com/questions/93808/dig-vs-nslookup; Note that `nslookup` does not consider the local `/etc/hosts` file.
+
+* `/etc/hosts` would be enough for a small network. But it does not scale for a large network, as the number of entries on each host would grow very fast; and managing it would become too hard. If any host's IP address changes, it should be updated in `/etc/hosts` file on all other hosts
+* That's where DNS servers come into play. A DNS server is a central server where all the DNS entries are stored. Now all hosts refer to DNS server for name resolution, instead of each host maintaining its own individual `/etc/hosts` file
+* `/etc/resolv.conf` contains the IP address of the DNS server.
+* Name resolution precedence order:
+  * By default that an `/etc/hosts` entries take precedence over DNS server
+  * `/etc/nsswitch.conf` defines the name resolution order. Default setting `hosts:    files dns`. The `files` is the local `/etc/hosts` file
+* You can add multiple nameserver addresses to the `/etc/resolv.conf`
+  * `8.8.8.8` is a public nameserver hosted by Google that contains entries for all websites on the Internet
+* You can also configure the DNS server to forward any unknown hosts to another nameserver, e.g. 8.8.8.8 
+* `/etc/resolve.conf` can also contain an entry `search    <some-domain-name>`. In that case it appends to the DNS queries the given domain name before lookup. This allows from example name resolution for a host with name `web` within the domain, when the actual entry in the DNS sever is `web.some-domain-name`. You can also define multiple `search` domains.
+
+* DNS record types (some of):
+  * A Record:  host to IPv4 entries
+  * AAAA Record: host to IPv6 entries
+  * CNAME Record: map one name to another name (i.e. aliases)
+
 
 ## Networking Basics
+* Two or more computers are connected using a switch to form a network. The computers are connected through their network interface. (it is also possible to connect two computers directly through their network interface to for a network of two computers).
+
+* `ip link` shows the network interfaces on a host
+* `ip addr add 192.168.1.10/24 dev eth0` sets the IP address 192.168.1.10 with subnet mask 255.255.255.0 for the network interface eth0
+* If we have multiple networks, for example one with the address 192.168.1.0 and another one with address 192.168.2.0 they can be connected to each other using a router
+  * A router is like a server with multiple network interfaces. It connects to both networks and gets an IP address on each of them. Now it can direct packets between both networks
+  
+* Imagine now that system B on the first network with IP address 192.168.1.11 wants to send a packet to system C on the second network with IP address 192.168.2.10
+  * It need to know where the router is
+  * This is configured using a gateway
+
+* `route` prints kernels routing table
+* `ip route add 192.168.2.0/24 via 192.168.1.1` adds a route to the routing table. This route says that in order to connect to the network with the address 192.168.2.0 use the gateway with the IP address 192.168.1.1
+  * Remember that similar routing must be configured on all hosts. For example in order to send back packets from host C on second network to host B on first network, we need to add a route on host C: `ip route add 192.168.1.0/24 via 192.168.2.1`
+
+* Now if the router is connected to internet and you want to connect from one of the hosts to Google, then you need an entry in the routing table that sets the router as the gateway for that destination address.
+  * Obviously you cannot add an entry to the routing table for any possible destination
+  * _Default Gateway_ sets the default gateway for any destination without an entry in the routing table
+  * `ip route add default via 192.168.1.1`: setting default gateway for a host on first network with IP address 192.168.1.0
+  * instead of `default` you can also say `0.0.0.0`. It means any IP destination. They are both the same thing
+
+* A `0.0.0.0` value in the Gateway field, indicates that you don't need a gateway. For example for system C with address 192.168.2.10 on the second network 192.168.2.0, there is a line in routing table with Destination `192.168.2.0 ` and Gateway `0.0.0.0`. This means in order to connect to hosts on the same network (192.168.2.0) it does not need a gateway.
+* You can of course have multiple gateways configured. For example one gateway for accessing internal private network and another default gateway for accessing the Internet.
+  
+
+* `ip link` list and modify network interfaces on the host
+* `ip addr` list IP addresses assigned to interfaces
+* `ip addr add <ip_address/subnet_mask> dev <interface>` assign an IP address to the interface
+  * Note: these changes made using these commands are only valid till system restart
+  * If you want to persist them, you must set them in the `/etc/network/interfaces` file
+* `ip route` or `route` is used to display the routing table
+* `ip route add 192.168.1.0/24 via 192.168.2.1` is used to add entries in the routing table, for example set the Gateway for access the network with address 192.168.1.0
 
 
 ## Troubleshooting
+
+* Imagine you get request time out error when trying to reach a service from a client on a remote host. This can have any of the following reasons:
+  * network interface on the client is not connected
+  * the host cannot resolve the IP address of the remote server
+  * the route to the server 
+  * the remote server has a connectivity problem
+  * the service on the remote server has an issue
+
+* Check client host's IP connectivity: 
+  * `ip link`
+  * check the primary interface is up and has an IP assigned
+  * `ip addr`
+
+* Check if the remote server's IP address can be resolved:
+  * `nslookup <remote-server>`
+  * Check if the DNS server can be reached and an IP address is resolved for the hostname
+
+* Check the remote server is reachable from client host:
+  * `ping <remote-server>`
+
+* `traceroute <remote-server>` shows the number of hops (devices) between client host and remote server
+
+* On the remote server, check if the service prot, e.g. HTTP is connected:
+  * `netstat` display information about network connections, routing tables, and several other network statistics
+  * `netstat -an | grep 80 | grep -i LISTEN`
+
+* Bring up a down network interface:
+  * `ip link set dev <interface-name> up `
 
 
 
